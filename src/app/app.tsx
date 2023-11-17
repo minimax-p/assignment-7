@@ -1,10 +1,18 @@
 import { ChangeEvent, MouseEvent, useState } from "react";
+import { Book, BookList } from "components/organisms/book-list";
+import { useFetch } from "hooks/use-fetch";
+
+interface SearchResponse {
+  numFound: number;
+  docs: Book[];
+}
 
 function App() {
   const [bookName, setBookName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [hasResult, setHasResult] = useState(false);
-  const [booksCount, setBooksCount] = useState(null);
+  const [fetchUri, setFetchUri] = useState("");
+  const { loading, hasData, books, booksCount } =
+    useFetch<SearchResponse>(fetchUri);
+  console.log(books);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setBookName(e.target.value);
@@ -12,18 +20,8 @@ function App() {
 
   const handleClick = async (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    setHasResult(false);
-    setLoading(true);
-
-    const response = await fetch(
-      "https://openlibrary.org/search.json?q=Learning React"
-    );
-    const data = await response.json();
-    window.console.log(data);
-    setLoading(false);
-    setHasResult(true);
-
-    setBooksCount(data.numFound);
+    const encoded = encodeURIComponent(bookName);
+    setFetchUri(`https://openlibrary.org/search.json?q=${encoded}`);
   };
 
   return (
@@ -46,7 +44,8 @@ function App() {
         Search Books
       </button>
       {loading ? <div>Loading ...</div> : ""}
-      {hasResult ? <div>Found {booksCount} books</div> : ""}
+      {hasData ? <div>Found {booksCount} books</div> : ""}
+      <BookList books={books} />
     </div>
   );
 }
